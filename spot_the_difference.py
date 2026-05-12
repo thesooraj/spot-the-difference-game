@@ -249,4 +249,45 @@ class GameState:
         return self.total_differences - self.found_count
 
     def is_active(self) -> bool:
-        return not self.game_over and not self.all_found            
+        return not self.game_over and not self.all_found         
+
+
+
+#  GAME LOGIC
+class GameLogic:
+    """
+    Bridges ImageProcessor and GameState.
+    Handles click validation and reveal logic.
+    """
+
+    # BGR colour constants
+    COLOUR_HIT    = (0,   0,   220)   # red   – found by player
+    COLOUR_REVEAL = (220, 100,   0)   # blue  – revealed
+
+    def __init__(self, image_processor: ImageProcessor, game_state: GameState):
+        self._processor  = image_processor
+        self._state      = game_state
+
+    def process_click(self, px: int, py: int):
+        """
+        Check (px, py) against unfound alterations.
+        Returns ('hit', alteration) | ('miss', None) | ('inactive', None).
+        """
+        if not self._state.is_active():
+            return 'inactive', None
+
+        for alt in self._processor.alterations:
+            if not alt.found and alt.contains_point(px, py):
+                alt.found = True
+                self._state.record_hit()
+                return 'hit', alt
+
+        self._state.record_miss()
+        return 'miss', None
+
+    def reveal_all(self) -> list:
+        """Mark all unfound differences as found; return the list."""
+        revealed = [a for a in self._processor.alterations if not a.found]
+        for alt in revealed:
+            alt.found = True
+        return revealed       
