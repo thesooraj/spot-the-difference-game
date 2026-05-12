@@ -175,4 +175,36 @@ def load_image(self, filepath: str):
         if w > self.MAX_DIM or h > self.MAX_DIM:
             scale = min(self.MAX_DIM / w, self.MAX_DIM / h)
             img = cv2.resize(img, (int(w * scale), int(h * scale)))
-        return img        
+        return img    
+
+    def _random_region(self, img_h, img_w, existing):
+        """Try up to 300 times to find a non-overlapping region."""
+        for _ in range(300):
+            rw = random.randint(self.MIN_REGION, self.MAX_REGION)
+            rh = random.randint(self.MIN_REGION, self.MAX_REGION)
+            x  = random.randint(10, img_w - rw - 10)
+            y  = random.randint(10, img_h - rh - 10)
+            if not any(
+                not (x + rw < ex or x > ex + ew or y + rh < ey or y > ey + eh)
+                for (ex, ey, ew, eh) in existing
+            ):
+                return x, y, rw, rh
+        return None
+
+    def _generate_differences(self):
+        h, w  = self.original_image.shape[:2]
+        used  = []
+        # Ensure all 4 types are represented (one type appears twice)
+        types = self._alteration_types.copy()
+        types.append(random.choice(self._alteration_types))
+        random.shuffle(types)
+
+        for i in range(self.NUM_DIFFERENCES):
+            region = self._random_region(h, w, used)
+            if region is None:
+                continue
+            x, y, rw, rh = region
+            used.append(region)
+            alt = types[i](x, y, rw, rh)
+            alt.apply(self.modified_image)
+            self.alterations.append(alt)    
