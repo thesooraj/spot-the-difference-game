@@ -47,3 +47,23 @@ class BaseAlteration:
 
     def __repr__(self):
         return f"{self.name}(x={self._x}, y={self._y}, w={self._width}, h={self._height})"
+
+#  COLOUR SHIFT ALTERATION
+
+class ColourShiftAlteration(BaseAlteration):
+    """Shifts the hue of a rectangular region in HSV colour space."""
+
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+        self.name = "Colour Shift"
+        self._shift = random.randint(40, 90)
+
+    def apply(self, image):
+        region = image[self._y:self._y+self._height, self._x:self._x+self._width]
+        hsv = cv2.cvtColor(region, cv2.COLOR_BGR2HSV).astype(np.int32)
+        hsv[:, :, 0] = (hsv[:, :, 0] + self._shift) % 180
+        hsv = np.clip(hsv, 0, 255).astype(np.uint8)
+        image[self._y:self._y+self._height, self._x:self._x+self._width] = (
+            cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        )
+        return image    
