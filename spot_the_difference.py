@@ -411,7 +411,7 @@ class GameUI:
                            text=text, fill=self.SUBTLE,
                            font=("Helvetica", 13), justify="center")
 
-
+# detection and scoring
 def _load_image(self):
         path = filedialog.askopenfilename(
             title="Select an Image",
