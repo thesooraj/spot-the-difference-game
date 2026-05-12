@@ -99,3 +99,28 @@ class BlurAlteration(BaseAlteration):
         blurred = cv2.GaussianBlur(region, (self._kernel, self._kernel), 0)
         image[self._y:self._y+self._height, self._x:self._x+self._width] = blurred
         return image        
+    
+
+#  COLOUR PATCH ALTERATION
+class ColourPatchAlteration(BaseAlteration):
+    """Overlays a semi-transparent colour patch on a region."""
+
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+        self.name = "Colour Patch"
+        self._colour = (
+            random.randint(80, 255),
+            random.randint(80, 255),
+            random.randint(80, 255),
+        )
+
+    def apply(self, image):
+        overlay = image.copy()
+        cv2.rectangle(
+            overlay,
+            (self._x, self._y),
+            (self._x + self._width, self._y + self._height),
+            self._colour, -1
+        )
+        cv2.addWeighted(overlay, 0.30, image, 0.70, 0, image)
+        return image    
