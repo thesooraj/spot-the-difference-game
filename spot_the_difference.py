@@ -410,3 +410,103 @@ class GameUI:
         canvas.create_text(self.CANVAS_W // 2, self.CANVAS_H // 2,
                            text=text, fill=self.SUBTLE,
                            font=("Helvetica", 13), justify="center")
+
+
+def _load_image(self):
+        path = filedialog.askopenfilename(
+            title="Select an Image",
+            filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")]
+        )
+        if not path:
+            return
+        try:
+            self._processor.load_image(path)
+            self._state.reset()
+            self._orig_display = self._processor.original_image.copy()
+            self._mod_display  = self._processor.modified_image.copy()
+            self._refresh_canvases()
+            self._update_stats()
+            self._set_status("🎮  Game on! Click the RIGHT image to spot differences.", self.GREEN)
+        except Exception as exc:
+            messagebox.showerror("Load Error", str(exc))
+
+    def _on_click(self, event: tk.Event):
+        if self._processor.original_image is None:
+            return
+
+        img_x = int((event.x - self._offset_x) / self._scale)
+        img_y = int((event.y - self._offset_y) / self._scale)
+
+        result, alt = self._logic.process_click(img_x, img_y)
+
+        if result == 'inactive':
+            self._set_status("⚠️  Load a new image to continue.", self.YELLOW)
+            return
+
+        if result == 'hit':
+            cx, cy = alt.get_center()
+            self._orig_display = self._processor.draw_circle(
+                self._orig_display, (cx, cy), GameLogic.COLOUR_HIT)
+            self._mod_display = self._processor.draw_circle(
+                self._mod_display,  (cx, cy), GameLogic.COLOUR_HIT)
+            self._refresh_canvases()
+            self._update_stats()
+
+            if self._state.all_found:
+                self._set_status("🎉  All 5 found! Load a new image to play again.", self.GREEN)
+                messagebox.showinfo(
+                    "🎉 You Win!",
+                    f"Congratulations! You found all 5 differences!\n"
+                    f"Total Score: {self._state.cumulative_score}"
+                )
+            else:
+                self._set_status(
+                    f"✅  Nice find! {self._state.remaining()} difference(s) remaining.", self.GREEN)
+
+        elif result == 'miss':
+            self._update_stats()
+            if self._state.game_over:
+                self._set_status(
+                    f"❌  3 mistakes reached — {self._state.found_count}/5 found. Load a new image.", self.RED)
+                messagebox.showwarning(
+                    "Game Over",
+                    f"You made 3 mistakes!\n"
+                    f"You found {self._state.found_count} out of 5 differences."
+                )
+            else:
+                left = GameState.MAX_MISTAKES - self._state.mistakes
+                self._set_status(f"❌  Wrong spot! {left} mistake(s) left.", self.RED)
+
+    def _refresh_canvases(self):
+        if self._orig_display is None:
+            return
+
+        orig_pil = self._fit(self._processor.cv2_to_pil(self._orig_display))
+        mod_pil  = self._fit(self._processor.cv2_to_pil(self._mod_display))
+
+        self._orig_photo = ImageTk.PhotoImage(orig_pil)
+        self._mod_photo  = ImageTk.PhotoImage(mod_pil)
+
+        for canvas, photo in ((self._orig_canvas, self._orig_photo),
+                              (self._mod_canvas,  self._mod_photo)):
+            canvas.delete("all")
+            canvas.create_image(self.CANVAS_W // 2, self.CANVAS_H // 2,
+                                image=photo, anchor="center")
+
+        h, w = self._processor.original_image.shape[:2]
+        self._scale    = min(self.CANVAS_W / w, self.CANVAS_H / h)
+        self._offset_x = (self.CANVAS_W  - w * self._scale) / 2
+        self._offset_y = (self.CANVAS_H  - h * self._scale) / 2
+
+    def _fit(self, pil_img: Image.Image) -> Image.Image:
+        w, h   = pil_img.size
+        scale  = min(self.CANVAS_W / w, self.CANVAS_H / h)
+        return pil_img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+
+    def _update_stats(self):
+        self._lbl_remaining.config(text=f"Remaining: {self._state.remaining()}")
+        self._lbl_mistakes.config( text=f"Mistakes: {self._state.mistakes} / 3")
+        self._lbl_score.config(    text=f"Score: {self._state.cumulative_score}")
+
+    def _set_status(self, msg: str, colour: str = "#cdd6f4"):
+        self._lbl_status.config(text=msg, fg=colour)
