@@ -49,7 +49,6 @@ class BaseAlteration:
         return f"{self.name}(x={self._x}, y={self._y}, w={self._width}, h={self._height})"
 
 #  COLOUR SHIFT ALTERATION
-
 class ColourShiftAlteration(BaseAlteration):
     """Shifts the hue of a rectangular region in HSV colour space."""
 
@@ -66,4 +65,21 @@ class ColourShiftAlteration(BaseAlteration):
         image[self._y:self._y+self._height, self._x:self._x+self._width] = (
             cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         )
-        return image    
+        return image  
+
+
+#  BRIGHTNESS ALTERATION
+class BrightnessAlteration(BaseAlteration):
+    """Darkens or brightens a rectangular region."""
+
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+        self.name = "Brightness"
+        self._factor = random.choice([-55, -45, 45, 55])
+
+    def apply(self, image):
+        region = image[self._y:self._y+self._height,
+                       self._x:self._x+self._width].astype(np.int32)
+        region = np.clip(region + self._factor, 0, 255).astype(np.uint8)
+        image[self._y:self._y+self._height, self._x:self._x+self._width] = region
+        return image      
