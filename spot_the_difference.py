@@ -208,3 +208,45 @@ def load_image(self, filepath: str):
             alt = types[i](x, y, rw, rh)
             alt.apply(self.modified_image)
             self.alterations.append(alt)    
+
+
+#  GAME STATE
+class GameState:
+    """
+    Encapsulates all mutable game data.
+    Keeps score, mistakes, and found/remaining counts.
+    """
+
+    MAX_MISTAKES = 3
+
+    def __init__(self):
+        self.mistakes          = 0
+        self.found_count       = 0
+        self.total_differences = 5
+        self.game_over         = False
+        self.all_found         = False
+        self.cumulative_score  = 0
+
+    def reset(self):
+        """Reset per-round state (cumulative score is kept)."""
+        self.mistakes    = 0
+        self.found_count = 0
+        self.game_over   = False
+        self.all_found   = False
+
+    def record_hit(self):
+        self.found_count      += 1
+        self.cumulative_score += 1
+        if self.found_count >= self.total_differences:
+            self.all_found = True
+
+    def record_miss(self):
+        self.mistakes += 1
+        if self.mistakes >= self.MAX_MISTAKES:
+            self.game_over = True
+
+    def remaining(self) -> int:
+        return self.total_differences - self.found_count
+
+    def is_active(self) -> bool:
+        return not self.game_over and not self.all_found            
