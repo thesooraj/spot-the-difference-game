@@ -124,3 +124,27 @@ class ColourPatchAlteration(BaseAlteration):
         )
         cv2.addWeighted(overlay, 0.30, image, 0.70, 0, image)
         return image    
+    
+
+#  IMAGE PROCESSOR
+class ImageProcessor:
+    """
+    Loads an image, clones it, and programmatically introduces
+    exactly 5 non-overlapping random differences using OpenCV.
+    """
+
+    NUM_DIFFERENCES = 5
+    MIN_REGION      = 40
+    MAX_REGION      = 80
+    MAX_DIM         = 500
+
+    def __init__(self):
+        self.original_image  = None
+        self.modified_image  = None
+        self.alterations     = []
+        self._alteration_types = [
+            ColourShiftAlteration,
+            BrightnessAlteration,
+            BlurAlteration,
+            ColourPatchAlteration,
+        ]    
