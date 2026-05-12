@@ -82,4 +82,20 @@ class BrightnessAlteration(BaseAlteration):
                        self._x:self._x+self._width].astype(np.int32)
         region = np.clip(region + self._factor, 0, 255).astype(np.uint8)
         image[self._y:self._y+self._height, self._x:self._x+self._width] = region
-        return image      
+        return image   
+
+
+#  BLUR ALTERATION
+class BlurAlteration(BaseAlteration):
+    """Applies Gaussian blur to a rectangular region."""
+
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+        self.name = "Blur"
+        self._kernel = random.choice([13, 17, 21])
+
+    def apply(self, image):
+        region = image[self._y:self._y+self._height, self._x:self._x+self._width]
+        blurred = cv2.GaussianBlur(region, (self._kernel, self._kernel), 0)
+        image[self._y:self._y+self._height, self._x:self._x+self._width] = blurred
+        return image        
