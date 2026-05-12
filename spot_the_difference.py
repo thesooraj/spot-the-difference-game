@@ -148,3 +148,31 @@ class ImageProcessor:
             BlurAlteration,
             ColourPatchAlteration,
         ]    
+
+def load_image(self, filepath: str):
+        """Load & resize image, clone it, apply 5 differences."""
+        img = cv2.imread(filepath)
+        if img is None:
+            raise ValueError(f"Cannot open image: {filepath}")
+        img = self._resize(img)
+        self.original_image = img.copy()
+        self.modified_image = img.copy()
+        self.alterations    = []
+        self._generate_differences()
+
+    def cv2_to_pil(self, cv2_img) -> Image.Image:
+        """Convert BGR cv2 array to RGB PIL Image."""
+        return Image.fromarray(cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB))
+
+    def draw_circle(self, image, center: tuple, colour: tuple):
+        """Return a copy of image with a circle drawn at center."""
+        out = image.copy()
+        cv2.circle(out, center, 35, colour, 3)
+        return out
+
+    def _resize(self, img):
+        h, w = img.shape[:2]
+        if w > self.MAX_DIM or h > self.MAX_DIM:
+            scale = min(self.MAX_DIM / w, self.MAX_DIM / h)
+            img = cv2.resize(img, (int(w * scale), int(h * scale)))
+        return img        
