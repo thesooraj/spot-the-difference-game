@@ -290,4 +290,123 @@ class GameLogic:
         revealed = [a for a in self._processor.alterations if not a.found]
         for alt in revealed:
             alt.found = True
-        return revealed       
+        return revealed     
+#  GAME UI
+class GameUI:
+    """
+    Main Tkinter window.
+    Composes ImageProcessor, GameState, and GameLogic.
+    """
+
+    CANVAS_W = 500
+    CANVAS_H = 400
+
+    BG        = "#1e1e2e"
+    PANEL_BG  = "#313244"
+    FG        = "#cdd6f4"
+    GREEN     = "#a6e3a1"
+    RED       = "#f38ba8"
+    BLUE      = "#89b4fa"
+    YELLOW    = "#f9e2af"
+    CYAN      = "#89dceb"
+    SUBTLE    = "#585b70"
+
+    def _init_(self, root: tk.Tk):
+        self.root = root
+        self.root.title("🔍 Spot the Difference — HIT137")
+        self.root.configure(bg=self.BG)
+        self.root.resizable(True, True)
+
+        self._processor = ImageProcessor()
+        self._state     = GameState()
+        self._logic     = GameLogic(self._processor, self._state)
+
+        self._orig_display = None
+        self._mod_display  = None
+        self._orig_photo   = None
+        self._mod_photo    = None
+
+        self._scale    = 1.0
+        self._offset_x = 0.0
+        self._offset_y = 0.0
+
+        self._build_ui()
+
+    def _build_ui(self):
+        tk.Label(self.root, text="🔍  Spot the Difference",
+                 font=("Helvetica", 20, "bold"),
+                 bg=self.BG, fg=self.FG).pack(pady=(15, 5))
+
+        stats = tk.Frame(self.root, bg=self.PANEL_BG, pady=8)
+        stats.pack(fill="x", padx=20, pady=5)
+
+        self._lbl_remaining = tk.Label(stats, text="Remaining: —",
+                                       font=("Helvetica", 13, "bold"),
+                                       bg=self.PANEL_BG, fg=self.GREEN)
+        self._lbl_remaining.pack(side="left", padx=25)
+
+        self._lbl_mistakes = tk.Label(stats, text="Mistakes: 0 / 3",
+                                      font=("Helvetica", 13, "bold"),
+                                      bg=self.PANEL_BG, fg=self.RED)
+        self._lbl_mistakes.pack(side="left", padx=25)
+
+        self._lbl_score = tk.Label(stats, text="Score: 0",
+                                   font=("Helvetica", 13, "bold"),
+                                   bg=self.PANEL_BG, fg=self.BLUE)
+        self._lbl_score.pack(side="right", padx=25)
+
+        img_frame = tk.Frame(self.root, bg=self.BG)
+        img_frame.pack(pady=10, padx=20)
+
+        self._orig_canvas = self._make_canvas(img_frame, col=0,
+                                               label="ORIGINAL  (reference only)")
+        self._mod_canvas  = self._make_canvas(img_frame, col=1,
+                                               label="FIND THE DIFFERENCES  →",
+                                               label_fg=self.YELLOW,
+                                               cursor="crosshair")
+        self._mod_canvas.bind("<Button-1>", self._on_click)
+
+        self._show_placeholder(self._orig_canvas, "Load an image to start")
+        self._show_placeholder(self._mod_canvas,  "Click here to find differences")
+
+        self._lbl_status = tk.Label(self.root,
+                                    text="📂  Load an image to begin!",
+                                    font=("Helvetica", 12),
+                                    bg=self.BG, fg=self.FG)
+        self._lbl_status.pack(pady=6)
+
+        btn_row = tk.Frame(self.root, bg=self.BG)
+        btn_row.pack(pady=(0, 20))
+
+        self._make_button(btn_row, "📂  Load Image", self.BLUE,  self._load_image, col=0)
+        self._make_button(btn_row, "👁️  Reveal All",  self.RED,   self._reveal_all,  col=1)
+
+    def _make_canvas(self, parent, col, label,
+                     label_fg=None, cursor="arrow") -> tk.Canvas:
+        frame = tk.Frame(parent, bg=self.BG)
+        frame.grid(row=0, column=col, padx=15)
+        tk.Label(frame, text=label,
+                 font=("Helvetica", 11, "bold"),
+                 bg=self.BG,
+                 fg=label_fg or self.FG).pack()
+        canvas = tk.Canvas(frame, bg=self.PANEL_BG,
+                           width=self.CANVAS_W, height=self.CANVAS_H,
+                           highlightthickness=2,
+                           highlightbackground="#45475a",
+                           cursor=cursor)
+        canvas.pack()
+        return canvas
+
+    def _make_button(self, parent, text, colour, cmd, col):
+        tk.Button(parent, text=text,
+                  font=("Helvetica", 12, "bold"),
+                  bg=colour, fg=self.BG,
+                  padx=20, pady=8, relief="flat",
+                  cursor="hand2", command=cmd
+                  ).grid(row=0, column=col, padx=12)
+
+    def _show_placeholder(self, canvas, text):
+        canvas.delete("all")
+        canvas.create_text(self.CANVAS_W // 2, self.CANVAS_H // 2,
+                           text=text, fill=self.SUBTLE,
+                           font=("Helvetica", 13), justify="center")
