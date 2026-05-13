@@ -510,3 +510,33 @@ def _load_image(self):
 
     def _set_status(self, msg: str, colour: str = "#cdd6f4"):
         self._lbl_status.config(text=msg, fg=colour)
+    def _reveal_all(self):
+        if self._processor.original_image is None:
+            messagebox.showinfo("No Image", "Please load an image first.")
+            return
+
+        revealed = self._logic.reveal_all()
+        for alt in revealed:
+            cx, cy = alt.get_center()
+            self._orig_display = self._processor.draw_circle(
+                self._orig_display, (cx, cy), GameLogic.COLOUR_REVEAL)
+            self._mod_display = self._processor.draw_circle(
+                self._mod_display,  (cx, cy), GameLogic.COLOUR_REVEAL)
+
+        self._refresh_canvases()
+        self._update_stats()
+        self._set_status("👁  All differences revealed. Load a new image to play again.", self.CYAN)
+
+
+# ================================================================
+#  ENTRY POINT
+# ================================================================
+
+    def main():
+    root = tk.Tk()
+    GameUI(root)
+    root.mainloop()
+
+
+    if _name_ == "_main_":
+    main()
