@@ -9,7 +9,7 @@ import numpy as np
 import random
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from PIL import Image, ImageTks
+from PIL import Image, ImageTk
 
 #  BASE ALTERATION CLASS  (Abstract Parent)
 
@@ -149,7 +149,7 @@ class ImageProcessor:
             ColourPatchAlteration,
         ]    
 
-def load_image(self, filepath: str):
+    def load_image(self, filepath: str):
         """Load & resize image, clone it, apply 5 differences."""
         img = cv2.imread(filepath)
         if img is None:
@@ -311,7 +311,7 @@ class GameUI:
     CYAN      = "#89dceb"
     SUBTLE    = "#585b70"
 
-    def _init_(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("🔍 Spot the Difference — HIT137")
         self.root.configure(bg=self.BG)
@@ -412,7 +412,7 @@ class GameUI:
                            font=("Helvetica", 13), justify="center")
 
 # detection and scoring
-def _load_image(self):
+    def _load_image(self):
         path = filedialog.askopenfilename(
             title="Select an Image",
             filetypes=[("Image files", "*.jpg *.jpeg *.png *.bmp")]
@@ -532,11 +532,11 @@ def _load_image(self):
 #  ENTRY POINT
 # ================================================================
 
-    def main():
+def main():
     root = tk.Tk()
     GameUI(root)
     root.mainloop()
 
 
-    if _name_ == "_main_":
+if __name__ == "__main__":
     main()
